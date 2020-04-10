@@ -14,11 +14,12 @@ public abstract class PrimitiveArrayReader extends ArrayReader {
 
     @Override
     public JsonToken get() {
-        if (index++ >= length) {
+        if (index >= length) {
             return null;
         }
 
         loadValue();
+        index++;
         return JsonToken.VALUE_NUMBER_INT;
     }
 

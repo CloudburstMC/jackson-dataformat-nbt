@@ -55,7 +55,9 @@ public class GeneratorTest {
                     17.5f,
                     new ArrayList<>(),
                     new HashMap<>(),
-                    new ArrayList<>()
+                    new ArrayList<>(),
+                    new int[10],
+                    new byte[10]
             );
 
             for (int i = 0; i < 10; i++) {
@@ -63,6 +65,8 @@ public class GeneratorTest {
                 data.mapTest.put(Integer.toString(i), i);
 
                 data.subTests.add(new SubTest(i * 10, false));
+                data.intArrayTest[i] = i * 20;
+                data.byteArrayTest[i] = (byte) (i * 2);
             }
 
             byte[] serialized = mapper.writeValueAsBytes(data);
@@ -86,12 +90,26 @@ public class GeneratorTest {
         public List<Integer> listTest;
         public Map<String, Integer> mapTest;
         public List<SubTest> subTests;
+        public int[] intArrayTest;
+        public byte[] byteArrayTest;
 
         public TestData() {
 
         }
 
-        public TestData(String string, boolean boolTest, byte byteTest, short shortTest, int intTest, float floatTest, List<Integer> listTest, Map<String, Integer> mapTest, List<SubTest> subTests) {
+        public TestData(
+                String string,
+                boolean boolTest,
+                byte byteTest,
+                short shortTest,
+                int intTest,
+                float floatTest,
+                List<Integer> listTest,
+                Map<String, Integer> mapTest,
+                List<SubTest> subTests,
+                int[] intArrayTest,
+                byte[] byteArrayTest
+        ) {
             this.string = string;
             this.boolTest = boolTest;
             this.byteTest = byteTest;
@@ -101,6 +119,8 @@ public class GeneratorTest {
             this.listTest = listTest;
             this.mapTest = mapTest;
             this.subTests = subTests;
+            this.intArrayTest = intArrayTest;
+            this.byteArrayTest = byteArrayTest;
         }
 
         @Override

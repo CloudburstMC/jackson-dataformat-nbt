@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -159,8 +160,14 @@ public class NBTGenerator extends GeneratorBase {
         throw new UnsupportedOperationException();
     }
 
-    public void writeBinary(Base64Variant bv, byte[] data, int offset, int len) {
-        throw new UnsupportedOperationException();
+    @Override
+    public void writeBinary(byte[] data) throws IOException {
+        _verifyValueWrite("write byte[] value");
+        getOutputContext().writeValue(new ByteArrayTag(_writeContext.getCurrentName(), data));
+    }
+
+    public void writeBinary(Base64Variant bv, byte[] data, int offset, int len) throws IOException {
+        writeBinary(Arrays.copyOfRange(data, offset, offset + len));
     }
 
     public void writeNumber(int v) throws IOException {
