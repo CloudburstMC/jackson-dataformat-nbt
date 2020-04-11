@@ -7,20 +7,21 @@ import com.nukkitx.nbt.tag.Tag;
 public class NBTWriteContext extends JsonWriteContext {
 
     protected String name;
-    protected NBTWriter<?> writer;
-    protected boolean ended = false;
+    public NBTWriter<?> writer;
 
     public NBTWriteContext(int type, NBTWriteContext parent, DupDetector dups, String name) {
         super(type, parent, dups);
         this.name = name;
 
-        if (!inArray()) {
+        if (inRoot()) {
+            writer = new SingleTagWriter(name);
+        } else if (!inArray()) {
             writer = new CompoundTagWriter(name);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void initListType(Object value) {
+    private void initListType(Tag<?> value) {
         Class<?> objType = value.getClass();
         writer = new ListTagWriter(name, objType);
     }
@@ -54,7 +55,6 @@ public class NBTWriteContext extends JsonWriteContext {
             writer = null;
         }
 
-        ended = false;
         return this;
     }
 
@@ -63,7 +63,7 @@ public class NBTWriteContext extends JsonWriteContext {
         throw new UnsupportedOperationException();
     }
 
-    public void writeValue(Object value) {
+    public void writeValue(Tag<?> value) {
         if (inArray() && _index == 0) {
             initListType(value);
         }
@@ -72,7 +72,7 @@ public class NBTWriteContext extends JsonWriteContext {
     }
 
     public void end() {
-        ended = true;
+        writer.end();
 
         if (!inRoot()) {
             Tag<?> tag = writer.getTag();
@@ -85,7 +85,7 @@ public class NBTWriteContext extends JsonWriteContext {
     }
 
     public boolean isEnded() {
-        return ended;
+        return writer != null && writer.isEnded();
     }
 
     private NBTWriteContext createOrReset(int type) {

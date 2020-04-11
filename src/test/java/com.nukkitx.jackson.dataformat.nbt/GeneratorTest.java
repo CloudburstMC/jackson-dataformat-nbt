@@ -1,83 +1,127 @@
 package com.nukkitx.jackson.dataformat.nbt;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @DisplayName("Generator")
 public class GeneratorTest {
 
-    //    @Test
-    void byteTest() throws IOException {
-        ObjectMapper mapper = new NBTMapper();
-//        ObjectMapper mapper = new JsonMapper();
+    private final ObjectMapper mapper = new NBTMapper();
 
+    @Test
+    @DisplayName("byte")
+    void byteTest() throws IOException {
         ByteClass b = new ByteClass((byte) 20);
 
         byte[] serialized = mapper.writeValueAsBytes(b);
-
         ByteClass deserialized = mapper.readValue(serialized, ByteClass.class);
-    }
 
-    public static class ByteClass {
-
-        public byte value;
-
-        public ByteClass(byte value) {
-            this.value = value;
-        }
-
-        public ByteClass() {
-
-        }
-
-        @Override
-        public String toString() {
-            return "ByteClass{" +
-                    "value=" + value +
-                    '}';
-        }
+        assertEquals(b, deserialized);
     }
 
     @Test
+    @DisplayName("test")
     void testGenerator() throws IOException {
-        try {
-            NBTMapper mapper = new NBTMapper();
-            TestData data = new TestData(
-                    "test string",
-                    true,
-                    (byte) 17,
-                    (short) 17,
-                    17,
-                    17.5f,
-                    new ArrayList<>(),
-                    new HashMap<>(),
-                    new ArrayList<>(),
-                    new int[10],
-                    new byte[10]
-            );
+        TestData data = getTestData(10);
 
-            for (int i = 0; i < 10; i++) {
-                data.listTest.add(i);
-                data.mapTest.put(Integer.toString(i), i);
+        byte[] serialized = mapper.writeValueAsBytes(data);
+        TestData deserialized = mapper.readValue(serialized, TestData.class);
 
-                data.subTests.add(new SubTest(i * 10, false));
-                data.intArrayTest[i] = i * 20;
-                data.byteArrayTest[i] = (byte) (i * 2);
-            }
+        assertEquals(data, deserialized);
+    }
 
-            byte[] serialized = mapper.writeValueAsBytes(data);
+    @Test
+    @DisplayName("list")
+    void testList() throws IOException {
+        List<TestData> data = new ArrayList<>();
 
-            TestData deserialized = mapper.readValue(serialized, TestData.class);
-
-            assert data.equals(deserialized);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw new RuntimeException(t);
+        for (int i = 0; i < 3; i++) {
+            data.add(getTestData(3));
         }
+
+        byte[] serialized = mapper.writeValueAsBytes(data);
+
+        List<TestData> deserialized = mapper.readValue(serialized, new TypeReference<List<TestData>>() {
+        });
+        assertEquals(data, deserialized);
+    }
+
+    @Test
+    @DisplayName("array")
+    void primitiveArrayTest() throws IOException {
+        int[] data = new int[100];
+
+        Random r = new Random();
+        for (int i = 0; i < data.length; i++) {
+            data[i] = r.nextInt();
+        }
+
+        byte[] serialized = mapper.writeValueAsBytes(data);
+        int[] deserialized = mapper.readValue(serialized, int[].class);
+
+        Assertions.assertArrayEquals(data, deserialized);
+    }
+
+    @Test
+    @DisplayName("byte array")
+    void primitiveByteArrayTest() throws IOException {
+        byte[] data = new byte[100];
+
+        Random r = new Random();
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte) r.nextInt(256);
+        }
+
+        byte[] serialized = mapper.writeValueAsBytes(data);
+        byte[] deserialized = mapper.readValue(serialized, byte[].class);
+
+        Assertions.assertArrayEquals(data, deserialized);
+    }
+
+    @Test
+    @DisplayName("value")
+    void valueTest() throws IOException {
+        long value = new Random().nextLong();
+
+        byte[] serialized = mapper.writeValueAsBytes(value);
+        long deserialized = mapper.readValue(serialized, long.class);
+
+        Assertions.assertEquals(value, deserialized);
+    }
+
+    private TestData getTestData(int c) {
+        TestData data = new TestData(
+                "test string",
+                true,
+                (byte) 17,
+                (short) 17,
+                17,
+                17.5f,
+                new ArrayList<>(),
+                new HashMap<>(),
+                new ArrayList<>(),
+                new int[10],
+                new byte[10]
+        );
+
+        for (int i = 0; i < c; i++) {
+            data.listTest.add(i);
+            data.mapTest.put(Integer.toString(i), i);
+
+            data.subTests.add(new SubTest(i * 10, false));
+            data.intArrayTest[i] = i * 20;
+            data.byteArrayTest[i] = (byte) (i * 2);
+        }
+
+        return data;
     }
 
     public static class TestData {
@@ -193,6 +237,39 @@ public class GeneratorTest {
                     "boolTest2=" + boolTest2 +
                     ", l=" + l +
                     '}';
+        }
+    }
+
+    public static class ByteClass {
+
+        public byte value;
+
+        public ByteClass(byte value) {
+            this.value = value;
+        }
+
+        public ByteClass() {
+
+        }
+
+        @Override
+        public String toString() {
+            return "ByteClass{" +
+                    "value=" + value +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ByteClass byteClass = (ByteClass) o;
+            return value == byteClass.value;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value);
         }
     }
 }

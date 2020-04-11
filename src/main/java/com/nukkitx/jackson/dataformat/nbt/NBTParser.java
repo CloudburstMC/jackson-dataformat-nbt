@@ -6,18 +6,13 @@ import com.fasterxml.jackson.core.base.ParserBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.nukkitx.jackson.dataformat.nbt.parser.CompoundTagReader;
-import com.nukkitx.jackson.dataformat.nbt.parser.ListTagReader;
 import com.nukkitx.jackson.dataformat.nbt.parser.NBTReader;
-import com.nukkitx.jackson.dataformat.nbt.parser.PrimitiveArrayReader.ByteArrayReader;
-import com.nukkitx.jackson.dataformat.nbt.parser.PrimitiveArrayReader.IntArrayReader;
-import com.nukkitx.jackson.dataformat.nbt.parser.PrimitiveArrayReader.LongArrayReader;
 import com.nukkitx.nbt.NbtUtils;
 import com.nukkitx.nbt.stream.NBTInputStream;
-import com.nukkitx.nbt.tag.CompoundTag;
+import com.nukkitx.nbt.tag.Tag;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.Objects;
 
 public class NBTParser extends ParserBase {
@@ -29,9 +24,11 @@ public class NBTParser extends ParserBase {
 
     protected int _formatFeatures;
 
-    protected CompoundTag nbt;
+    protected Tag<?> nbt;
 
     protected NBTReader reader;
+
+    protected boolean end = false;
 
     public NBTParser(IOContext context, BufferRecycler nr, int parserFeatures, int nbtFeatures, ObjectCodec codec, InputStream in) {
         super(context, parserFeatures);
@@ -50,7 +47,7 @@ public class NBTParser extends ParserBase {
         }
 
         try {
-            nbt = (CompoundTag) nbtIn.readTag();
+            nbt = nbtIn.readTag();
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -72,9 +69,13 @@ public class NBTParser extends ParserBase {
     }
 
     public JsonToken nextToken() {
+        if (end) {
+            return null;
+        }
+
         if (reader == null) {
-            reader = new CompoundTagReader(nbt.getValue(), null);
-            return (_currToken = JsonToken.START_OBJECT);
+            reader = NBTReader.getByTag(nbt, null);
+            return (_currToken = reader.start());
         }
 
         JsonToken next = reader.get();
@@ -84,7 +85,7 @@ public class NBTParser extends ParserBase {
             reader = reader.getParent();
 
             if (reader == null) {
-                return (_currToken = null);
+                this.end = true;
             }
 
             return (_currToken = end);
@@ -95,15 +96,7 @@ public class NBTParser extends ParserBase {
         } else if (next == JsonToken.START_ARRAY) {
             Object value = reader.getCurrentValue();
 
-            if (value instanceof List) {
-                reader = new ListTagReader((List) value, reader);
-            } else if (value instanceof byte[]) {
-                reader = new ByteArrayReader((byte[]) value, reader);
-            } else if (value instanceof int[]) {
-                reader = new IntArrayReader((int[]) value, reader);
-            } else if (value instanceof long[]) {
-                reader = new LongArrayReader((long[]) value, reader);
-            }
+            reader = NBTReader.getByValue(value, reader);
         }
 
         return (_currToken = next);

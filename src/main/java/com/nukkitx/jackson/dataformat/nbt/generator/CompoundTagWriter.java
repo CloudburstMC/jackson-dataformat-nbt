@@ -12,8 +12,8 @@ public class CompoundTagWriter extends NBTWriter<Tag<?>> {
     }
 
     @Override
-    public void write(Object tag) {
-        builder.tag((Tag) tag);
+    public void write(Tag<?> tag) {
+        builder.tag(tag);
     }
 
     @Override

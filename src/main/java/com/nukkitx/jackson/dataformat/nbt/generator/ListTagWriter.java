@@ -17,7 +17,7 @@ public class ListTagWriter<T extends Tag<T>> extends NBTWriter<T> {
     }
 
     @Override
-    public void write(Object value) {
+    public void write(Tag<?> value) {
         if (typeClass != value.getClass()) {
             throw new IllegalArgumentException("Expected " + typeClass + " got " + value.getClass());
         }

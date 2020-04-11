@@ -86,12 +86,10 @@ public class NBTGenerator extends GeneratorBase {
     }
 
     public void writeStartArray() throws IOException {
-        if (rootContext == null) {
-            _reportError("Root element must be an object");
-        }
-
         _verifyValueWrite("start an array");
         _writeContext = _writeContext.createChildArrayContext();
+
+        checkRootContext();
     }
 
     public void writeEndArray() throws IOException {
@@ -107,9 +105,7 @@ public class NBTGenerator extends GeneratorBase {
         _verifyValueWrite("start an object");
         _writeContext = _writeContext.createChildObjectContext();
 
-        if (rootContext == null) {
-            rootContext = (NBTWriteContext) _writeContext;
-        }
+        checkRootContext();
     }
 
     public void writeEndObject() throws IOException {
@@ -129,7 +125,8 @@ public class NBTGenerator extends GeneratorBase {
 
     public void writeString(String text) throws IOException {
         _verifyValueWrite("write String value");
-        getOutputContext().writeValue(new StringTag(_writeContext.getCurrentName(), text));
+        checkRootContext();
+        getOutputContext().writeValue(new StringTag(getCurrentName(), text));
     }
 
     public void writeString(char[] text, int offset, int len) throws IOException {
@@ -163,21 +160,29 @@ public class NBTGenerator extends GeneratorBase {
     @Override
     public void writeBinary(byte[] data) throws IOException {
         _verifyValueWrite("write byte[] value");
-        getOutputContext().writeValue(new ByteArrayTag(_writeContext.getCurrentName(), data));
+        checkRootContext();
+        getOutputContext().writeValue(new ByteArrayTag(getCurrentName(), data));
+    }
+
+    @Override
+    public void writeBinary(byte[] data, int offset, int len) throws IOException {
+        writeBinary(Arrays.copyOfRange(data, offset, offset + len));
     }
 
     public void writeBinary(Base64Variant bv, byte[] data, int offset, int len) throws IOException {
-        writeBinary(Arrays.copyOfRange(data, offset, offset + len));
+        writeBinary(data, offset, len);
     }
 
     public void writeNumber(int v) throws IOException {
         _verifyValueWrite("write int value");
-        getOutputContext().writeValue(new IntTag(_writeContext.getCurrentName(), v));
+        checkRootContext();
+        getOutputContext().writeValue(new IntTag(getCurrentName(), v));
     }
 
     public void writeNumber(long v) throws IOException {
         _verifyValueWrite("write long value");
-        getOutputContext().writeValue(new LongTag(_writeContext.getCurrentName(), v));
+        checkRootContext();
+        getOutputContext().writeValue(new LongTag(getCurrentName(), v));
     }
 
     public void writeNumber(BigInteger v) {
@@ -186,23 +191,27 @@ public class NBTGenerator extends GeneratorBase {
 
     public void writeNumber(double v) throws IOException {
         _verifyValueWrite("write double value");
-        getOutputContext().writeValue(new DoubleTag(_writeContext.getCurrentName(), v));
+        checkRootContext();
+        getOutputContext().writeValue(new DoubleTag(getCurrentName(), v));
     }
 
     public void writeNumber(float v) throws IOException {
         _verifyValueWrite("write float value");
-        getOutputContext().writeValue(new FloatTag(_writeContext.getCurrentName(), v));
+        checkRootContext();
+        getOutputContext().writeValue(new FloatTag(getCurrentName(), v));
     }
 
     @Override
     public void writeNumber(short v) throws IOException {
         _verifyValueWrite("write short value");
-        getOutputContext().writeValue(new ShortTag(_writeContext.getCurrentName(), v));
+        checkRootContext();
+        getOutputContext().writeValue(new ShortTag(getCurrentName(), v));
     }
 
     public void writeNumber(byte v) throws IOException {
         _verifyValueWrite("write byte value");
-        getOutputContext().writeValue(new ByteTag(_writeContext.getCurrentName(), v));
+        checkRootContext();
+        getOutputContext().writeValue(new ByteTag(getCurrentName(), v));
     }
 
     public void writeNumber(BigDecimal v) {
@@ -224,22 +233,15 @@ public class NBTGenerator extends GeneratorBase {
     @Override
     public void writeArray(int[] array, int offset, int length) throws IOException {
         _verifyValueWrite("write int[] value");
-
-        getOutputContext().writeValue(new IntArrayTag(_writeContext.getCurrentName(), array));
+        checkRootContext();
+        getOutputContext().writeValue(new IntArrayTag(getCurrentName(), array));
     }
 
     @Override
     public void writeArray(long[] array, int offset, int length) throws IOException {
         _verifyValueWrite("write long[] value");
-
-        getOutputContext().writeValue(new LongArrayTag(_writeContext.getCurrentName(), array));
-    }
-
-    @Override
-    public void writeBinary(byte[] data, int offset, int len) throws IOException {
-        _verifyValueWrite("write byte[] value");
-
-        getOutputContext().writeValue(new ByteArrayTag(_writeContext.getCurrentName(), data));
+        checkRootContext();
+        getOutputContext().writeValue(new LongArrayTag(getCurrentName(), array));
     }
 
     @Override
@@ -309,5 +311,21 @@ public class NBTGenerator extends GeneratorBase {
         }
         throw new IllegalStateException("No ObjectCodec defined for the generator, can only serialize simple wrapper types (type passed "
                 + value.getClass().getName() + ")");
+    }
+
+    protected void checkRootContext() {
+        if (rootContext == null) {
+            rootContext = (NBTWriteContext) _writeContext;
+        }
+    }
+
+    public String getCurrentName() {
+        String name = _writeContext.getCurrentName();
+
+        if (name == null) {
+            return "";
+        }
+
+        return name;
     }
 }

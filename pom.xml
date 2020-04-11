@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.nukkitx</groupId>
             <artifactId>nbt</artifactId>
-            <version>1.5.2</version>
+            <version>1.5.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -73,6 +73,9 @@
                         <version>${junit.platform.version}</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <trimStackTrace>false</trimStackTrace>
+                </configuration>
             </plugin>
         </plugins>
     </build>

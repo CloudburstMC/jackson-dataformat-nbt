@@ -1,6 +1,9 @@
 package com.nukkitx.jackson.dataformat.nbt.parser;
 
 import com.fasterxml.jackson.core.JsonToken;
+import com.nukkitx.jackson.dataformat.nbt.parser.PrimitiveArrayReader.ByteArrayReader;
+import com.nukkitx.jackson.dataformat.nbt.parser.PrimitiveArrayReader.IntArrayReader;
+import com.nukkitx.jackson.dataformat.nbt.parser.PrimitiveArrayReader.LongArrayReader;
 import com.nukkitx.nbt.tag.*;
 
 import java.util.List;
@@ -173,5 +176,39 @@ public abstract class NBTReader {
 
     public boolean isRoot() {
         return parent == null;
+    }
+
+    public static NBTReader getByTag(Tag<?> tag, NBTReader parent) {
+        NBTReader reader = getByValue(tag.getValue(), parent);
+
+        if (reader == null) {
+            return new SingleTagReader(tag);
+        }
+
+        return reader;
+    }
+
+    public static NBTReader getByValue(Object value, NBTReader parent) {
+        if (value instanceof Map) {
+            return new CompoundTagReader((Map) value, parent);
+        }
+
+        if (value instanceof List) {
+            return new ListTagReader((List) value, parent);
+        }
+
+        if (value instanceof byte[]) {
+            return new ByteArrayReader((byte[]) value, parent);
+        }
+
+        if (value instanceof int[]) {
+            return new IntArrayReader((int[]) value, parent);
+        }
+
+        if (value instanceof long[]) {
+            return new LongArrayReader((long[]) value, parent);
+        }
+
+        return null;
     }
 }
