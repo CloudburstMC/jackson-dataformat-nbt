@@ -1,19 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>com.nukkitx.jackson.dataformat.nbt</groupId>
-    <artifactId>jackson-nbt</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <parent>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformats-binary</artifactId>
+        <version>2.10.3</version>
+    </parent>
+    <groupId>com.nukkitx.jackson.dataformat</groupId>
+    <artifactId>jackson-dataformat-nbt</artifactId>
+    <version>2.10.3-SNAPSHOT</version>
+    <name>Jackson dataformat: NBT</name>
+    <packaging>bundle</packaging>
+    <description>Support for reading and writing Mojang's Named Binary Tags
+        ([NBT](https://minecraft.gamepedia.com/NBT_format)
+        encoded data using Jackson abstractions (streaming API, data binding, tree model)
+    </description>
+    <url>http://github.com/NukkitX/jackson-dataformat-nbt</url>
 
     <properties>
-        <jackson.version>2.10.3</jackson.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.build.timestamp.format>HHmm-ddMMyyyy</maven.build.timestamp.format>
+        <!-- Generate PackageVersion.java into this directory. -->
+        <packageVersion.dir>com/nukkitx/jackson/dataformat/nbt</packageVersion.dir>
+        <packageVersion.package>${project.groupId}.nbt</packageVersion.package>
+        <!--
+         | Default configuration properties for the OSGi maven-bundle-plugin work ok
+        -->
         <junit.jupiter.version>5.0.0-M4</junit.jupiter.version>
         <junit.platform.version>1.0.0-M4</junit.platform.version>
     </properties>
@@ -28,13 +38,13 @@
     <dependencies>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
+            <artifactId>jackson-databind</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
+            <artifactId>jackson-annotations</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.nukkitx</groupId>
@@ -42,40 +52,27 @@
             <version>1.5.1</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.junit.platform</groupId>
-                        <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>${junit.platform.version}</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <trimStackTrace>false</trimStackTrace>
-                </configuration>
+                <!-- Inherited from oss-base. Generate PackageVersion.java.-->
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <executions>
+                    <execution>
+                        <id>process-packageVersion</id>
+                        <phase>generate-sources</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--  19-Mar-2019, tatu: Add rudimentary JDK9+ module info. To build with JDK 8
+                   will have to use `moduleInfoFile` as anything else requires JDK 9+
+              -->
+            <plugin>
+                <groupId>org.moditect</groupId>
+                <artifactId>moditect-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

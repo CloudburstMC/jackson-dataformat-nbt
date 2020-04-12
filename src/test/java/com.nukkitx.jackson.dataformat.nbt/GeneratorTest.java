@@ -2,23 +2,23 @@ package com.nukkitx.jackson.dataformat.nbt;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
-@DisplayName("Generator")
+
 public class GeneratorTest {
 
-    private final ObjectMapper mapper = new NBTMapper();
+    private static final ObjectMapper mapper = new NBTMapper();
 
     @Test
-    @DisplayName("byte")
-    void byteTest() throws IOException {
+    public void byteTest() throws IOException {
         ByteClass b = new ByteClass((byte) 20);
 
         byte[] serialized = mapper.writeValueAsBytes(b);
@@ -28,8 +28,7 @@ public class GeneratorTest {
     }
 
     @Test
-    @DisplayName("test")
-    void testGenerator() throws IOException {
+    public void generatorTest() throws IOException {
         TestData data = getTestData(10);
 
         byte[] serialized = mapper.writeValueAsBytes(data);
@@ -39,8 +38,7 @@ public class GeneratorTest {
     }
 
     @Test
-    @DisplayName("list")
-    void testList() throws IOException {
+    public void listTest() throws IOException {
         List<TestData> data = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
@@ -55,8 +53,7 @@ public class GeneratorTest {
     }
 
     @Test
-    @DisplayName("array")
-    void primitiveArrayTest() throws IOException {
+    public void primitiveArrayTest() throws IOException {
         int[] data = new int[100];
 
         Random r = new Random();
@@ -67,12 +64,11 @@ public class GeneratorTest {
         byte[] serialized = mapper.writeValueAsBytes(data);
         int[] deserialized = mapper.readValue(serialized, int[].class);
 
-        Assertions.assertArrayEquals(data, deserialized);
+        assertArrayEquals(data, deserialized);
     }
 
     @Test
-    @DisplayName("byte array")
-    void primitiveByteArrayTest() throws IOException {
+    public void primitiveByteArrayTest() throws IOException {
         byte[] data = new byte[100];
 
         Random r = new Random();
@@ -83,18 +79,17 @@ public class GeneratorTest {
         byte[] serialized = mapper.writeValueAsBytes(data);
         byte[] deserialized = mapper.readValue(serialized, byte[].class);
 
-        Assertions.assertArrayEquals(data, deserialized);
+        assertArrayEquals(data, deserialized);
     }
 
     @Test
-    @DisplayName("value")
-    void valueTest() throws IOException {
+    public void valueTest() throws IOException {
         long value = new Random().nextLong();
 
         byte[] serialized = mapper.writeValueAsBytes(value);
         long deserialized = mapper.readValue(serialized, long.class);
 
-        Assertions.assertEquals(value, deserialized);
+        assertEquals(value, deserialized);
     }
 
     private TestData getTestData(int c) {
@@ -105,9 +100,9 @@ public class GeneratorTest {
                 (short) 17,
                 17,
                 17.5f,
-                new ArrayList<>(),
-                new HashMap<>(),
-                new ArrayList<>(),
+                new ArrayList<Integer>(),
+                new HashMap<String, Integer>(),
+                new ArrayList<SubTest>(),
                 new int[10],
                 new byte[10]
         );
