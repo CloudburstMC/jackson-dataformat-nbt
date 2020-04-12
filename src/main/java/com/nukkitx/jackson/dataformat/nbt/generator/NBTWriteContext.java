@@ -11,6 +11,10 @@ public class NBTWriteContext extends JsonWriteContext {
 
     public NBTWriteContext(int type, NBTWriteContext parent, DupDetector dups, String name) {
         super(type, parent, dups);
+        if (name == null) {
+            name = "";
+        }
+
         this.name = name;
 
         if (inRoot()) {
