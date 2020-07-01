@@ -88,6 +88,10 @@ public class NBTGenerator extends GeneratorBase {
 
     public void writeStartArray() throws IOException {
         _verifyValueWrite("start an array");
+        if (rootContext == null) { //root tag
+            _out.writeByte(NbtType.LIST.getId());
+            _out.writeUTF("");
+        }
         _writeContext = _writeContext.createChildArrayContext();
 
         checkRootContext();
@@ -104,6 +108,11 @@ public class NBTGenerator extends GeneratorBase {
 
     public void writeStartObject() throws IOException {
         _verifyValueWrite("start an object");
+        if (rootContext == null) { //root tag
+            System.out.println("write start object");
+            _out.writeByte(NbtType.COMPOUND.getId());
+            _out.writeUTF("");
+        }
         _writeContext = _writeContext.createChildObjectContext();
 
         checkRootContext();
@@ -114,7 +123,9 @@ public class NBTGenerator extends GeneratorBase {
             _reportError("Current context not Object but " + _writeContext.typeDesc());
         }
 
+        System.out.println("write end object");
         getOutputContext().end();
+        _out.writeByte(0); // end tag
         _writeContext = _writeContext.getParent();
     }
 
@@ -128,6 +139,7 @@ public class NBTGenerator extends GeneratorBase {
         _verifyValueWrite("write String value");
         checkRootContext();
 
+        System.out.println("write string");
         getOutputContext().writeValue(NbtType.STRING, text);
         getOutputContext().getOutput().writeUTF(text);
     }
@@ -228,7 +240,6 @@ public class NBTGenerator extends GeneratorBase {
         _verifyValueWrite("write byte value");
         checkRootContext();
 
-        System.out.println("write byte");
         getOutputContext().writeValue(NbtType.BYTE, v);
         getOutputContext().getOutput().writeByte(v);
     }
@@ -344,8 +355,8 @@ public class NBTGenerator extends GeneratorBase {
     }
 
     protected void checkRootContext() {
-        if (rootContext == null) {
-            rootContext = (NBTWriteContext) _writeContext;
-        }
+//        if (rootContext == null) {
+//            rootContext = (NBTWriteContext) _writeContext;
+//        }
     }
 }

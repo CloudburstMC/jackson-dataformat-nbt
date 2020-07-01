@@ -50,12 +50,12 @@ public abstract class NBTReader {
 
         if (type == NbtType.STRING) {
             currentValue = stringValue = input.readUTF();
+            System.out.println("read value string");
             return JsonToken.VALUE_STRING;
         }
 
         if (type == NbtType.BYTE) {
             currentValue = byteValue = input.readByte();
-            System.out.println("value: " + currentValue);
             return JsonToken.VALUE_NUMBER_INT;
         }
 
@@ -118,7 +118,6 @@ public abstract class NBTReader {
     }
 
     public byte getByteValue() {
-        System.out.println("get byte value");
         return byteValue;
     }
 
@@ -165,6 +164,7 @@ public abstract class NBTReader {
     public static NBTReader getRoot(DataInput input) throws IOException {
         NbtType<?> type = NbtType.byId(input.readUnsignedByte());
         input.readUTF(); // root tag name
+        System.out.println("read root tag: " + type.getTypeName());
 
         NBTReader reader = getByType(type, null, input);
 

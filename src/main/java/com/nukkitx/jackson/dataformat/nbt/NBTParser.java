@@ -64,10 +64,12 @@ public class NBTParser extends ParserBase {
 
         if (reader == null) {
             reader = NBTReader.getRoot(_in);
+            System.out.println("token: " + reader.start());
             return (_currToken = reader.start());
         }
 
         JsonToken next = reader.get();
+        System.out.println("token: " + next);
 
         if (next == null) {
             JsonToken end = reader.end();

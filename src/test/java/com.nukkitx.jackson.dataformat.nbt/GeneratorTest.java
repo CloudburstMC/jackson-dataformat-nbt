@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -15,18 +18,36 @@ public class GeneratorTest {
 
     private static final ObjectMapper mapper = new NBTMapper();
 
-    @Test
+    //    @Test
     public void byteTest() throws IOException {
         ByteClass b = new ByteClass((byte) 20);
 
         byte[] serialized = mapper.writeValueAsBytes(b);
-        System.out.println(Arrays.toString(serialized));
-
-        Objects.requireNonNull(mapper);
-        Objects.requireNonNull(serialized);
         ByteClass deserialized = mapper.readValue(serialized, ByteClass.class);
 
         assertEquals(b, deserialized);
+    }
+
+    @Test
+    public void simpleTest() throws IOException {
+        SimpleData data = getSimpleData();
+
+        byte[] serialized = mapper.writeValueAsBytes(data);
+        System.out.println(Arrays.toString(serialized));
+
+        DataInput input = new DataInputStream(new ByteArrayInputStream(serialized));
+        System.out.println(input.readUnsignedByte());
+        System.out.println(input.readUTF());
+
+        System.out.println(input.readUnsignedByte());
+        System.out.println(input.readUTF());
+        System.out.println(input.readUTF());
+
+        System.out.println(input.readUnsignedByte());
+
+        SimpleData deserialized = mapper.readValue(serialized, SimpleData.class);
+
+//        assertEquals(data, deserialized);
     }
 
     //    @Test
@@ -39,7 +60,7 @@ public class GeneratorTest {
         assertEquals(data, deserialized);
     }
 
-    //    @Test
+    //        @Test
     public void listTest() throws IOException {
         List<TestData> data = new ArrayList<>();
 
@@ -119,6 +140,37 @@ public class GeneratorTest {
         }
 
         return data;
+    }
+
+    private SimpleData getSimpleData() {
+        SimpleData data = new SimpleData(
+                ""
+//                true,
+//                (byte) 17,
+//                (short) 17,
+//                17,
+//                17.5f
+        );
+
+        return data;
+    }
+
+    public static class SimpleData {
+        public String string;
+//        public boolean boolTest;
+//        public byte byteTest;
+//        public short shortTest;
+//        public int intTest;
+//        public float floatTest;
+
+        public SimpleData(String string/*, boolean boolTest, byte byteTest, short shortTest, int intTest, float floatTest*/) {
+            this.string = string;
+//            this.boolTest = boolTest;
+//            this.byteTest = byteTest;
+//            this.shortTest = shortTest;
+//            this.intTest = intTest;
+//            this.floatTest = floatTest;
+        }
     }
 
     public static class TestData {

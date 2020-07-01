@@ -90,6 +90,11 @@ public class NBTWriteContext extends JsonWriteContext {
     }
 
     public void end() throws IOException {
+        if (writer == null && inArray()) {
+//            throw new IllegalStateException("Cannot write empty list");
+            writer = new ListTagWriter(name, NbtType.END, output); //TODO: check
+        }
+
         writer.end();
     }
 
