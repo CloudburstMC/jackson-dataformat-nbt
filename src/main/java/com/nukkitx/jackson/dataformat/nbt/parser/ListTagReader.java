@@ -1,26 +1,30 @@
 package com.nukkitx.jackson.dataformat.nbt.parser;
 
 import com.fasterxml.jackson.core.JsonToken;
-import com.nukkitx.nbt.tag.Tag;
+import com.nukkitx.nbt.NbtType;
 
-import java.util.Iterator;
-import java.util.List;
+import java.io.DataInput;
+import java.io.IOException;
 
 public class ListTagReader extends ArrayReader {
 
-    protected Iterator<Tag<?>> iterator;
+    protected NbtType<?> type;
 
-    public ListTagReader(List<Tag<?>> list, NBTReader parent) {
-        super(parent);
-        this.iterator = list.iterator();
+    public ListTagReader(DataInput input, NBTReader parent) throws IOException {
+        super(input, parent);
+
+        this.type = NbtType.byId(input.readUnsignedByte());
     }
 
     @Override
-    public JsonToken get() {
-        if (iterator.hasNext()) {
-            return decodeValue(iterator.next());
-        }
+    public JsonToken get() throws IOException {
+        super.get();
 
-        return null;
+        return decodeValue(type);
+    }
+
+    @Override
+    void readValue() {
+
     }
 }

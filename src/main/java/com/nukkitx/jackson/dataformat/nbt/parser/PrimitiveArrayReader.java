@@ -2,71 +2,50 @@ package com.nukkitx.jackson.dataformat.nbt.parser;
 
 import com.fasterxml.jackson.core.JsonToken;
 
+import java.io.DataInput;
+import java.io.IOException;
+
 public abstract class PrimitiveArrayReader extends ArrayReader {
 
-    protected int index = 0;
-    protected final int length;
-
-    public PrimitiveArrayReader(NBTReader parent, int length) {
-        super(parent);
-        this.length = length;
+    public PrimitiveArrayReader(DataInput input, NBTReader parent) throws IOException {
+        super(input, parent);
+        this.token = JsonToken.VALUE_NUMBER_INT;
+        this.length = input.readInt();
     }
-
-    @Override
-    public JsonToken get() {
-        if (index >= length) {
-            return null;
-        }
-
-        loadValue();
-        index++;
-        return JsonToken.VALUE_NUMBER_INT;
-    }
-
-    abstract void loadValue();
 
     public static class ByteArrayReader extends PrimitiveArrayReader {
 
-        protected final byte[] data;
-
-        public ByteArrayReader(byte[] data, NBTReader parent) {
-            super(parent, data.length);
-            this.data = data;
+        public ByteArrayReader(DataInput input, NBTReader parent) throws IOException {
+            super(input, parent);
         }
 
         @Override
-        void loadValue() {
-            this.currentValue = this.byteValue = data[index];
+        void readValue() throws IOException {
+            this.currentValue = this.byteValue = input.readByte();
         }
     }
 
     public static class IntArrayReader extends PrimitiveArrayReader {
 
-        protected final int[] data;
-
-        public IntArrayReader(int[] data, NBTReader parent) {
-            super(parent, data.length);
-            this.data = data;
+        public IntArrayReader(DataInput input, NBTReader parent) throws IOException {
+            super(input, parent);
         }
 
         @Override
-        void loadValue() {
-            this.currentValue = this.intValue = data[index];
+        void readValue() throws IOException {
+            this.currentValue = this.intValue = input.readInt();
         }
     }
 
     public static class LongArrayReader extends PrimitiveArrayReader {
 
-        protected final long[] data;
-
-        public LongArrayReader(long[] data, NBTReader parent) {
-            super(parent, data.length);
-            this.data = data;
+        public LongArrayReader(DataInput input, NBTReader parent) throws IOException {
+            super(input, parent);
         }
 
         @Override
-        void loadValue() {
-            this.currentValue = this.longValue = data[index];
+        void readValue() throws IOException {
+            this.currentValue = this.longValue = input.readLong();
         }
     }
 }

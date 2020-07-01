@@ -2,8 +2,6 @@ package com.nukkitx.jackson.dataformat.nbt;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -22,12 +20,16 @@ public class GeneratorTest {
         ByteClass b = new ByteClass((byte) 20);
 
         byte[] serialized = mapper.writeValueAsBytes(b);
+        System.out.println(Arrays.toString(serialized));
+
+        Objects.requireNonNull(mapper);
+        Objects.requireNonNull(serialized);
         ByteClass deserialized = mapper.readValue(serialized, ByteClass.class);
 
         assertEquals(b, deserialized);
     }
 
-    @Test
+    //    @Test
     public void generatorTest() throws IOException {
         TestData data = getTestData(10);
 
@@ -37,7 +39,7 @@ public class GeneratorTest {
         assertEquals(data, deserialized);
     }
 
-    @Test
+    //    @Test
     public void listTest() throws IOException {
         List<TestData> data = new ArrayList<>();
 
@@ -52,7 +54,7 @@ public class GeneratorTest {
         assertEquals(data, deserialized);
     }
 
-    @Test
+    //    @Test
     public void primitiveArrayTest() throws IOException {
         int[] data = new int[100];
 
@@ -67,7 +69,7 @@ public class GeneratorTest {
         assertArrayEquals(data, deserialized);
     }
 
-    @Test
+    //    @Test
     public void primitiveByteArrayTest() throws IOException {
         byte[] data = new byte[100];
 
@@ -82,7 +84,7 @@ public class GeneratorTest {
         assertArrayEquals(data, deserialized);
     }
 
-    @Test
+    //    @Test
     public void valueTest() throws IOException {
         long value = new Random().nextLong();
 

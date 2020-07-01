@@ -1,15 +1,18 @@
 package com.nukkitx.jackson.dataformat.nbt.parser;
 
 import com.fasterxml.jackson.core.JsonToken;
-import com.nukkitx.nbt.tag.Tag;
+import com.nukkitx.nbt.NbtType;
+
+import java.io.DataInput;
+import java.io.IOException;
 
 public class SingleTagReader extends NBTReader {
 
-    protected Tag<?> tag;
+    protected NbtType<?> type;
 
-    public SingleTagReader(Tag<?> tag) {
-        super(null);
-        this.tag = tag;
+    public SingleTagReader(DataInput input, NbtType<?> type) {
+        super(input, null);
+        this.type = type;
     }
 
     @Override
@@ -18,8 +21,8 @@ public class SingleTagReader extends NBTReader {
     }
 
     @Override
-    public JsonToken start() {
-        return decodeValue(tag);
+    public JsonToken start() throws IOException {
+        return decodeValue(type);
     }
 
     @Override

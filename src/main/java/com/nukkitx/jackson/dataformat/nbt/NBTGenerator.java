@@ -7,12 +7,10 @@ import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
 import com.nukkitx.jackson.dataformat.nbt.generator.NBTWriteContext;
-import com.nukkitx.nbt.NbtUtils;
-import com.nukkitx.nbt.stream.NBTOutputStream;
-import com.nukkitx.nbt.tag.*;
+import com.nukkitx.jackson.dataformat.nbt.util.IOUtils;
+import com.nukkitx.nbt.NbtType;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -24,7 +22,7 @@ public class NBTGenerator extends GeneratorBase {
 
     protected int _formatFeatures;
 
-    protected NBTOutputStream _out;
+    protected DataOutput _out;
 
     final protected IOContext _ioContext;
 
@@ -34,17 +32,18 @@ public class NBTGenerator extends GeneratorBase {
         super(jsonFeatures, codec);
         _ioContext = context;
         _formatFeatures = nbtFeatures;
-        _writeContext = new NBTWriteContext(0, null, _writeContext.getDupDetector(), null);
 
         if (NBTFactory.Feature.GZIP.enabledIn(nbtFeatures)) {
-            _out = NbtUtils.createWriterLE(out);
+            _out = IOUtils.createWriterLE(out);
         } else if (NBTFactory.Feature.LITTLE_ENDIAN.enabledIn(nbtFeatures)) {
-            _out = NbtUtils.createWriterLE(out);
+            _out = IOUtils.createWriterLE(out);
         } else if (NBTFactory.Feature.NETWORK.enabledIn(nbtFeatures)) {
-            _out = NbtUtils.createNetworkWriter(out);
+            _out = IOUtils.createNetworkWriter(out);
         } else {
-            _out = NbtUtils.createWriter(out);
+            _out = IOUtils.createWriter(out);
         }
+
+        _writeContext = new NBTWriteContext(0, null, _writeContext.getDupDetector(), null, _out);
     }
 
     @Override
@@ -58,8 +57,8 @@ public class NBTGenerator extends GeneratorBase {
     }
 
     public void flush() throws IOException {
-        if (rootContext.isEnded()) {
-            _out.write(rootContext.getValue());
+        if (_out instanceof Flushable) {
+            ((Flushable) _out).flush();
         }
     }
 
@@ -75,7 +74,9 @@ public class NBTGenerator extends GeneratorBase {
 
         super.close();
         flush();
-        _out.close();
+        if (_out instanceof Closeable) {
+            ((Closeable) _out).close();
+        }
     }
 
     protected void _verifyValueWrite(String typeMsg) throws IOException {
@@ -126,7 +127,9 @@ public class NBTGenerator extends GeneratorBase {
     public void writeString(String text) throws IOException {
         _verifyValueWrite("write String value");
         checkRootContext();
-        getOutputContext().writeValue(new StringTag(getCurrentName(), text));
+
+        getOutputContext().writeValue(NbtType.STRING, text);
+        getOutputContext().getOutput().writeUTF(text);
     }
 
     public void writeString(char[] text, int offset, int len) throws IOException {
@@ -161,7 +164,10 @@ public class NBTGenerator extends GeneratorBase {
     public void writeBinary(byte[] data) throws IOException {
         _verifyValueWrite("write byte[] value");
         checkRootContext();
-        getOutputContext().writeValue(new ByteArrayTag(getCurrentName(), data));
+
+        getOutputContext().writeValue(NbtType.BYTE_ARRAY, data);
+        getOutputContext().getOutput().writeInt(data.length);
+        getOutputContext().getOutput().write(data);
     }
 
     @Override
@@ -176,13 +182,17 @@ public class NBTGenerator extends GeneratorBase {
     public void writeNumber(int v) throws IOException {
         _verifyValueWrite("write int value");
         checkRootContext();
-        getOutputContext().writeValue(new IntTag(getCurrentName(), v));
+
+        getOutputContext().writeValue(NbtType.INT, v);
+        getOutputContext().getOutput().writeInt(v);
     }
 
     public void writeNumber(long v) throws IOException {
         _verifyValueWrite("write long value");
         checkRootContext();
-        getOutputContext().writeValue(new LongTag(getCurrentName(), v));
+
+        getOutputContext().writeValue(NbtType.LONG, v);
+        getOutputContext().getOutput().writeLong(v);
     }
 
     public void writeNumber(BigInteger v) {
@@ -192,26 +202,35 @@ public class NBTGenerator extends GeneratorBase {
     public void writeNumber(double v) throws IOException {
         _verifyValueWrite("write double value");
         checkRootContext();
-        getOutputContext().writeValue(new DoubleTag(getCurrentName(), v));
+
+        getOutputContext().writeValue(NbtType.DOUBLE, v);
+        getOutputContext().getOutput().writeDouble(v);
     }
 
     public void writeNumber(float v) throws IOException {
         _verifyValueWrite("write float value");
         checkRootContext();
-        getOutputContext().writeValue(new FloatTag(getCurrentName(), v));
+
+        getOutputContext().writeValue(NbtType.FLOAT, v);
+        getOutputContext().getOutput().writeFloat(v);
     }
 
     @Override
     public void writeNumber(short v) throws IOException {
         _verifyValueWrite("write short value");
         checkRootContext();
-        getOutputContext().writeValue(new ShortTag(getCurrentName(), v));
+
+        getOutputContext().writeValue(NbtType.SHORT, v);
+        getOutputContext().getOutput().writeShort(v);
     }
 
     public void writeNumber(byte v) throws IOException {
         _verifyValueWrite("write byte value");
         checkRootContext();
-        getOutputContext().writeValue(new ByteTag(getCurrentName(), v));
+
+        System.out.println("write byte");
+        getOutputContext().writeValue(NbtType.BYTE, v);
+        getOutputContext().getOutput().writeByte(v);
     }
 
     public void writeNumber(BigDecimal v) {
@@ -234,14 +253,26 @@ public class NBTGenerator extends GeneratorBase {
     public void writeArray(int[] array, int offset, int length) throws IOException {
         _verifyValueWrite("write int[] value");
         checkRootContext();
-        getOutputContext().writeValue(new IntArrayTag(getCurrentName(), array));
+
+        array = Arrays.copyOfRange(array, offset, offset + length);
+        getOutputContext().writeValue(NbtType.INT_ARRAY, array);
+        getOutputContext().getOutput().writeInt(length);
+        for (int v : array) {
+            getOutputContext().getOutput().writeInt(v);
+        }
     }
 
     @Override
     public void writeArray(long[] array, int offset, int length) throws IOException {
         _verifyValueWrite("write long[] value");
         checkRootContext();
-        getOutputContext().writeValue(new LongArrayTag(getCurrentName(), array));
+
+        array = Arrays.copyOfRange(array, offset, offset + length);
+        getOutputContext().writeValue(NbtType.LONG_ARRAY, array);
+        getOutputContext().getOutput().writeInt(length);
+        for (long v : Arrays.copyOfRange(array, offset, offset + length)) {
+            getOutputContext().getOutput().writeLong(v);
+        }
     }
 
     @Override
@@ -249,7 +280,6 @@ public class NBTGenerator extends GeneratorBase {
         return (NBTWriteContext) super.getOutputContext();
     }
 
-    //add byte support (useless?)
     protected void _writeSimpleObject(Object value) throws IOException {
         Thread.dumpStack();
         /* 31-Dec-2009, tatu: Actually, we could just handle some basic
@@ -317,15 +347,5 @@ public class NBTGenerator extends GeneratorBase {
         if (rootContext == null) {
             rootContext = (NBTWriteContext) _writeContext;
         }
-    }
-
-    public String getCurrentName() {
-        String name = _writeContext.getCurrentName();
-
-        if (name == null) {
-            return "";
-        }
-
-        return name;
     }
 }

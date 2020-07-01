@@ -1,23 +1,27 @@
 package com.nukkitx.jackson.dataformat.nbt.generator;
 
-import com.nukkitx.nbt.CompoundTagBuilder;
-import com.nukkitx.nbt.tag.Tag;
+import com.nukkitx.nbt.NbtType;
 
-public class CompoundTagWriter extends NBTWriter<Tag<?>> {
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.Objects;
 
-    protected CompoundTagBuilder builder = CompoundTagBuilder.builder();
+public class CompoundTagWriter extends NBTWriter {
 
-    public CompoundTagWriter(String name) {
-        super(name);
+    public CompoundTagWriter(String name, DataOutput output) {
+        super(name, output);
     }
 
     @Override
-    public void write(Tag<?> tag) {
-        builder.tag(tag);
+    public void write(NbtType<?> type, String name, Object value) throws IOException {
+        Objects.requireNonNull(name);
+        output.writeByte(type.getId());
+        output.writeUTF(name);
     }
 
     @Override
-    public Tag<?> getTag() {
-        return builder.build(name);
+    public void end() throws IOException {
+        super.end();
+        output.writeByte(0); //end tag
     }
 }
