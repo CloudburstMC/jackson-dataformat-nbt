@@ -22,19 +22,7 @@ public abstract class NBTWriter {
 
     }
 
-    public String getName() {
-        return name;
-    }
-
     public void end() throws IOException {
         this.end = true;
-    }
-
-    public boolean isEnded() {
-        return end;
-    }
-
-    public DataOutput getOutput() {
-        return output;
     }
 }

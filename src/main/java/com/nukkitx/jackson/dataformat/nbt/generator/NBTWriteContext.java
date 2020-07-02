@@ -2,6 +2,7 @@ package com.nukkitx.jackson.dataformat.nbt.generator;
 
 import com.fasterxml.jackson.core.json.DupDetector;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
+import com.nukkitx.jackson.dataformat.nbt.NBTGenerator;
 import com.nukkitx.nbt.NbtType;
 
 import java.io.DataOutput;
@@ -9,19 +10,15 @@ import java.io.IOException;
 
 public class NBTWriteContext extends JsonWriteContext {
 
+    private final NBTGenerator generator;
+
     protected String name;
     public NBTWriter writer;
     private DataOutput output;
-    private final int level;
 
-    public NBTWriteContext(int type, NBTWriteContext parent, DupDetector dups, String name, DataOutput output) {
-        this(type, parent, dups, name, output, 0);
-    }
-
-    public NBTWriteContext(int type, NBTWriteContext parent, DupDetector dups, String name, DataOutput output, int level) {
+    public NBTWriteContext(NBTGenerator generator, int type, NBTWriteContext parent, DupDetector dups, String name, DataOutput output) {
         super(type, parent, dups);
-        System.out.println("WRITE CONTEXT: " + output);
-        this.level = level;
+        this.generator = generator;
         this.output = output;
         if (name == null) {
             name = "";
@@ -36,18 +33,8 @@ public class NBTWriteContext extends JsonWriteContext {
         }
     }
 
-    private void initListType(NbtType<?> type) {
-//        NbtType<?> type;
-//
-//        if (value instanceof Iterable) {
-//            type = NbtType.LIST;
-//        } else if (value instanceof Map) {
-//            type = NbtType.COMPOUND;
-//        } else {
-//            type = NbtType.byClass(value.getClass());
-//        }
-
-        writer = new ListTagWriter(name == null || name.isEmpty() ? Integer.toString(level) : name, type, output);
+    private void initListType(NbtType<?> type) throws IOException {
+        writer = new ListTagWriter(name, type, output, generator);
     }
 
     public NBTWriteContext createChildArrayContext() {
@@ -97,23 +84,18 @@ public class NBTWriteContext extends JsonWriteContext {
     }
 
     public void end() throws IOException {
-        if (writer == null && inArray()) {
+        if (writer == null) {
             throw new IllegalStateException("Cannot write empty list");
-//            writer = new ListTagWriter(name, NbtType.END, output); //TODO: check
         }
 
         writer.end();
     }
 
-    public boolean isEnded() {
-        return writer != null && writer.isEnded();
-    }
-
     private NBTWriteContext createOrReset(int type) {
         NBTWriteContext ctxt = (NBTWriteContext) _child;
         if (ctxt == null) {
-            _child = ctxt = new NBTWriteContext(type, this,
-                    (_dups == null) ? null : _dups.child(), _currentName, writer.output, level + 1);
+            _child = ctxt = new NBTWriteContext(generator, type, this,
+                    (_dups == null) ? null : _dups.child(), _currentName, writer.output);
             return ctxt;
         }
 

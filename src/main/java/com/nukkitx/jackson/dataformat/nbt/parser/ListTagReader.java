@@ -16,8 +16,6 @@ public class ListTagReader extends ArrayReader {
         this.type = NbtType.byId(input.readUnsignedByte());
         this.length = input.readInt();
         this.token = JsonToken.VALUE_NUMBER_INT; //just a non-null value
-        System.out.println("list type: " + type.getTypeName());
-        System.out.println("list length: " + length);
     }
 
     @Override

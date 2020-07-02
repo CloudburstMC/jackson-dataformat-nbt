@@ -7,7 +7,6 @@ import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
 import com.nukkitx.jackson.dataformat.nbt.generator.NBTWriteContext;
-import com.nukkitx.jackson.dataformat.nbt.util.DebugDataOutput;
 import com.nukkitx.jackson.dataformat.nbt.util.IOUtils;
 import com.nukkitx.nbt.NbtType;
 
@@ -29,24 +28,12 @@ public class NBTGenerator extends GeneratorBase {
 
     protected NBTWriteContext rootContext;
 
-    public NBTGenerator(IOContext context, int jsonFeatures, int nbtFeatures, ObjectCodec codec, OutputStream out) {
+    public NBTGenerator(IOContext context, int jsonFeatures, int nbtFeatures, ObjectCodec codec, OutputStream out) throws IOException {
         super(jsonFeatures, codec);
         _ioContext = context;
         _formatFeatures = nbtFeatures;
-
-        if (NBTFactory.Feature.GZIP.enabledIn(nbtFeatures)) {
-            _out = IOUtils.createWriterLE(out);
-        } else if (NBTFactory.Feature.LITTLE_ENDIAN.enabledIn(nbtFeatures)) {
-            _out = IOUtils.createWriterLE(out);
-        } else if (NBTFactory.Feature.NETWORK.enabledIn(nbtFeatures)) {
-            _out = IOUtils.createNetworkWriter(out);
-        } else {
-            _out = IOUtils.createWriter(out);
-        }
-
-        _out = DebugDataOutput.from(_out);
-
-        _writeContext = new NBTWriteContext(0, null, _writeContext.getDupDetector(), null, _out);
+        _out = wrapStream(out);
+        _writeContext = new NBTWriteContext(this, 0, null, _writeContext.getDupDetector(), null, _out);
     }
 
     @Override
@@ -91,12 +78,7 @@ public class NBTGenerator extends GeneratorBase {
 
     public void writeStartArray() throws IOException {
         _verifyValueWrite("start an array");
-        System.out.println("write start array: " + getOutputContext().getCurrentName());
-//        getOutputContext().getOutput().writeByte(NbtType.LIST.getId());
-//        if (rootContext == null || _writeContext.inObject()) {
-//            System.out.println("write name: "+getOutputContext().getCurrentName());
-//            getOutputContext().getOutput().writeUTF(rootContext == null ? "" : getOutputContext().getCurrentName());
-//        }
+
         getOutputContext().writeValue(NbtType.LIST, null);
         _writeContext = _writeContext.createChildArrayContext();
 
@@ -108,19 +90,14 @@ public class NBTGenerator extends GeneratorBase {
             _reportError("Current context not Array but " + _writeContext.typeDesc());
         }
 
-        System.out.println("write end array");
         getOutputContext().end();
         _writeContext = _writeContext.getParent();
     }
 
     public void writeStartObject() throws IOException {
         _verifyValueWrite("start an object");
-        System.out.println("write start object");
+
         getOutputContext().writeValue(NbtType.COMPOUND, null);
-//        getOutputContext().getOutput().writeByte(NbtType.COMPOUND.getId());
-//        if (rootContext == null || _writeContext.inObject()) { //root tag
-//            getOutputContext().getOutput().writeUTF(rootContext == null ? "" : getOutputContext().getCurrentName());
-//        }
         _writeContext = _writeContext.createChildObjectContext();
 
         checkRootContext();
@@ -131,7 +108,6 @@ public class NBTGenerator extends GeneratorBase {
             _reportError("Current context not Object but " + _writeContext.typeDesc());
         }
 
-        System.out.println("write end object");
         getOutputContext().end();
         _writeContext = _writeContext.getParent();
     }
@@ -146,7 +122,6 @@ public class NBTGenerator extends GeneratorBase {
         _verifyValueWrite("write String value");
         checkRootContext();
 
-        System.out.println("write string");
         getOutputContext().writeValue(NbtType.STRING, text);
         getOutputContext().getOutput().writeUTF(text);
     }
@@ -365,5 +340,23 @@ public class NBTGenerator extends GeneratorBase {
         if (rootContext == null) {
             rootContext = (NBTWriteContext) _writeContext;
         }
+    }
+
+    public DataOutput wrapStream(OutputStream stream) throws IOException {
+        if (NBTFactory.Feature.GZIP.enabledIn(_formatFeatures)) {
+            stream = IOUtils.createGZIPWriter(stream);
+        }
+
+        DataOutput out;
+
+        if (NBTFactory.Feature.LITTLE_ENDIAN.enabledIn(_formatFeatures)) {
+            out = IOUtils.createWriterLE(stream);
+        } else if (NBTFactory.Feature.NETWORK.enabledIn(_formatFeatures)) {
+            out = IOUtils.createNetworkWriter(stream);
+        } else {
+            out = IOUtils.createWriter(stream);
+        }
+
+        return out;
     }
 }

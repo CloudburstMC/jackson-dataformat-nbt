@@ -50,7 +50,6 @@ public abstract class NBTReader {
 
         if (type == NbtType.STRING) {
             currentValue = stringValue = input.readUTF();
-            System.out.println("read value string");
             return JsonToken.VALUE_STRING;
         }
 
@@ -153,10 +152,6 @@ public abstract class NBTReader {
         return byteValue != 0;
     }
 
-    public boolean isRoot() {
-        return parent == null;
-    }
-
     public NbtType<?> getCurrentType() {
         return currentType;
     }
@@ -164,7 +159,6 @@ public abstract class NBTReader {
     public static NBTReader getRoot(DataInput input) throws IOException {
         NbtType<?> type = NbtType.byId(input.readUnsignedByte());
         input.readUTF(); // root tag name
-        System.out.println("read root tag: " + type.getTypeName());
 
         NBTReader reader = getByType(type, null, input);
 

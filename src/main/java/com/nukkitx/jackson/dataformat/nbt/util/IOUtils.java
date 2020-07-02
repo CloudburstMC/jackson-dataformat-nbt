@@ -23,8 +23,8 @@ public class IOUtils {
         return new LittleEndianDataInputStream(stream);
     }
 
-    public static DataInput createGZIPReader(InputStream stream) throws IOException {
-        return createReader(new GZIPInputStream(stream));
+    public static InputStream createGZIPReader(InputStream stream) throws IOException {
+        return new GZIPInputStream(stream);
     }
 
     public static DataInput createNetworkReader(InputStream stream) {
@@ -42,8 +42,8 @@ public class IOUtils {
         return new LittleEndianDataOutputStream(stream);
     }
 
-    public static DataOutput createGZIPWriter(OutputStream stream) throws IOException {
-        return createWriter(new GZIPOutputStream(stream));
+    public static OutputStream createGZIPWriter(OutputStream stream) throws IOException {
+        return new GZIPOutputStream(stream);
     }
 
     public static DataOutput createNetworkWriter(OutputStream stream) {

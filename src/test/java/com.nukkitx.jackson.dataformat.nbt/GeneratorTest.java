@@ -2,6 +2,7 @@ package com.nukkitx.jackson.dataformat.nbt;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nukkitx.jackson.dataformat.nbt.NBTFactory.Feature;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -13,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 
 public class GeneratorTest {
 
-    private static final ObjectMapper mapper = new NBTMapper();
+    private static final ObjectMapper mapper = new NBTMapper().enable(Feature.LITTLE_ENDIAN);
 
     @Test
     public void byteTest() throws IOException {
@@ -41,7 +42,6 @@ public class GeneratorTest {
         SimpleData data = getSimpleData();
 
         byte[] serialized = mapper.writeValueAsBytes(data);
-        System.out.println(Arrays.toString(serialized));
 
         SimpleData deserialized = mapper.readValue(serialized, SimpleData.class);
 

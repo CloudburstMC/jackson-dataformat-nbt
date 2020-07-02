@@ -16,7 +16,6 @@ public class CompoundTagReader extends NBTReader {
 
     @Override
     public JsonToken get() throws IOException {
-        System.out.println("compound get()");
         if (type != null) {
             JsonToken r = decodeValue(type);
             type = null;
@@ -24,14 +23,12 @@ public class CompoundTagReader extends NBTReader {
         }
 
         type = NbtType.byId(input.readUnsignedByte());
-        System.out.println("read tag type: " + type.getTypeName());
 
         if (type == NbtType.END) {
             return null;
         }
 
         currentName = input.readUTF();
-        System.out.println("read tag name: " + currentName);
         return JsonToken.FIELD_NAME;
     }
 

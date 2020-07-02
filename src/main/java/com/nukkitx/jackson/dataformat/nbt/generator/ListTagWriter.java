@@ -1,8 +1,12 @@
 package com.nukkitx.jackson.dataformat.nbt.generator;
 
+import com.nukkitx.jackson.dataformat.nbt.NBTGenerator;
 import com.nukkitx.nbt.NbtType;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.DataOutput;
+import java.io.IOException;
 
 public class ListTagWriter extends NBTWriter {
 
@@ -13,10 +17,10 @@ public class ListTagWriter extends NBTWriter {
 
     private int size;
 
-    public ListTagWriter(String name, NbtType<?> type, DataOutput output) {
+    public ListTagWriter(String name, NbtType<?> type, DataOutput output, NBTGenerator generator) throws IOException {
         super(name, null);
         this.byteStream = new ByteArrayOutputStream();
-        this.output = new DataOutputStream(byteStream);
+        this.output = generator.wrapStream(byteStream);
         this.origin = output;
         this.type = type;
     }
@@ -35,10 +39,7 @@ public class ListTagWriter extends NBTWriter {
         super.end();
         origin.writeByte(type.getId());
         origin.writeInt(size);
-        System.out.println("BYTE STREAM SIZE " + byteStream.size());
         origin.write(byteStream.toByteArray());
-        System.out.println("write list type: " + type.getTypeName());
-        System.out.println("write list size: " + size);
         ((Closeable) output).close();
     }
 }

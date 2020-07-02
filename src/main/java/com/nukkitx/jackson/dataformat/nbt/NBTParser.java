@@ -7,7 +7,6 @@ import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.nukkitx.jackson.dataformat.nbt.parser.CompoundTagReader;
 import com.nukkitx.jackson.dataformat.nbt.parser.NBTReader;
-import com.nukkitx.jackson.dataformat.nbt.util.DebugDataInput;
 import com.nukkitx.jackson.dataformat.nbt.util.IOUtils;
 
 import java.io.Closeable;
@@ -31,22 +30,22 @@ public class NBTParser extends ParserBase {
 
     protected boolean end = false;
 
-    public NBTParser(IOContext context, BufferRecycler nr, int parserFeatures, int nbtFeatures, ObjectCodec codec, InputStream in) {
+    public NBTParser(IOContext context, BufferRecycler nr, int parserFeatures, int nbtFeatures, ObjectCodec codec, InputStream in) throws IOException {
         super(context, parserFeatures);
         this._objectCodec = codec;
         this._formatFeatures = nbtFeatures;
 
         if (NBTFactory.Feature.GZIP.enabledIn(nbtFeatures)) {
-            _in = IOUtils.createReaderLE(in);
-        } else if (NBTFactory.Feature.LITTLE_ENDIAN.enabledIn(nbtFeatures)) {
+            in = IOUtils.createGZIPReader(in);
+        }
+
+        if (NBTFactory.Feature.LITTLE_ENDIAN.enabledIn(nbtFeatures)) {
             _in = IOUtils.createReaderLE(in);
         } else if (NBTFactory.Feature.NETWORK.enabledIn(nbtFeatures)) {
             _in = IOUtils.createNetworkReader(in);
         } else {
             _in = IOUtils.createReader(in);
         }
-
-        _in = DebugDataInput.from(_in);
     }
 
     @Override
@@ -67,12 +66,10 @@ public class NBTParser extends ParserBase {
 
         if (reader == null) {
             reader = NBTReader.getRoot(_in);
-            System.out.println("token: " + (_currToken = reader.start()));
-            return _currToken;
+            return (_currToken = reader.start());
         }
 
         JsonToken next = reader.get();
-        System.out.println("token: " + next);
 
         if (next == null) {
             JsonToken end = reader.end();

@@ -229,22 +229,22 @@ public class NBTFactory extends JsonFactory {
     }
 
     @Override
-    public NBTParser createParser(Reader r) throws IOException {
+    public NBTParser createParser(Reader r) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NBTParser createParser(String content) throws IOException {
+    public NBTParser createParser(String content) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NBTParser createParser(char[] content, int offset, int len) throws IOException {
+    public NBTParser createParser(char[] content, int offset, int len) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NBTParser createParser(char[] content) throws IOException {
+    public NBTParser createParser(char[] content) {
         throw new UnsupportedOperationException();
     }
 
@@ -262,7 +262,7 @@ public class NBTFactory extends JsonFactory {
     }
 
     @Override
-    public NBTGenerator createGenerator(Writer w) throws IOException {
+    public NBTGenerator createGenerator(Writer w) {
         throw new UnsupportedOperationException();
     }
 
@@ -274,34 +274,34 @@ public class NBTFactory extends JsonFactory {
         return _createGenerator(_decorate(fos, context), context);
     }
 
-    protected NBTParser _createParser(InputStream in, IOContext context) {
+    protected NBTParser _createParser(InputStream in, IOContext context) throws IOException {
         return new NBTParser(context, _getBufferRecycler(), _parserFeatures, _nbtParserFeatures, _objectCodec, in);
     }
 
-    private NBTGenerator _createGenerator(OutputStream out, IOContext context) {
+    private NBTGenerator _createGenerator(OutputStream out, IOContext context) throws IOException {
         return new NBTGenerator(context, _generatorFeatures, _nbtGeneratorFeatures, _objectCodec, out);
     }
 
     public enum Feature implements FormatFeature {
-        BIG_ENDIAN(true, 1),
-        LITTLE_ENDIAN(false, 1),
-        NETWORK(false, 1),
-        GZIP(false, 1);
+        BIG_ENDIAN(true),
+        LITTLE_ENDIAN(false),
+        NETWORK(false),
+        GZIP(false);
 
         protected final boolean _defaultState;
         protected final int _mask;
 
-        Feature(boolean defaultState, int mask) {
+        Feature(boolean defaultState) {
             this._defaultState = defaultState;
-            this._mask = mask;
+            this._mask = 1 << ordinal();
         }
 
         public boolean enabledByDefault() {
-            return false;
+            return _defaultState;
         }
 
         public boolean enabledIn(int flags) {
-            return false;
+            return (flags & _mask) != 0;
         }
 
         public int getMask() {
