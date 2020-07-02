@@ -4,9 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -18,12 +15,23 @@ public class GeneratorTest {
 
     private static final ObjectMapper mapper = new NBTMapper();
 
-    //    @Test
+    @Test
     public void byteTest() throws IOException {
         ByteClass b = new ByteClass((byte) 20);
 
         byte[] serialized = mapper.writeValueAsBytes(b);
         ByteClass deserialized = mapper.readValue(serialized, ByteClass.class);
+
+        assertEquals(b, deserialized);
+    }
+
+    @Test
+    public void byteListTest() throws IOException {
+        List<ByteClass> b = Arrays.asList(new ByteClass((byte) 20), new ByteClass((byte) 10), new ByteClass((byte) 90));
+
+        byte[] serialized = mapper.writeValueAsBytes(b);
+        List<ByteClass> deserialized = mapper.readValue(serialized, new TypeReference<List<ByteClass>>() {
+        });
 
         assertEquals(b, deserialized);
     }
@@ -35,22 +43,12 @@ public class GeneratorTest {
         byte[] serialized = mapper.writeValueAsBytes(data);
         System.out.println(Arrays.toString(serialized));
 
-        DataInput input = new DataInputStream(new ByteArrayInputStream(serialized));
-        System.out.println(input.readUnsignedByte());
-        System.out.println(input.readUTF());
-
-        System.out.println(input.readUnsignedByte());
-        System.out.println(input.readUTF());
-        System.out.println(input.readUTF());
-
-        System.out.println(input.readUnsignedByte());
-
         SimpleData deserialized = mapper.readValue(serialized, SimpleData.class);
 
-//        assertEquals(data, deserialized);
+        assertEquals(data, deserialized);
     }
 
-    //    @Test
+    @Test
     public void generatorTest() throws IOException {
         TestData data = getTestData(10);
 
@@ -60,22 +58,55 @@ public class GeneratorTest {
         assertEquals(data, deserialized);
     }
 
-    //        @Test
+    @Test
     public void listTest() throws IOException {
         List<TestData> data = new ArrayList<>();
 
-        for (int i = 0; i < 3; i++) {
-            data.add(getTestData(3));
+        for (int i = 0; i < 2; i++) {
+            data.add(getTestData(1));
         }
 
         byte[] serialized = mapper.writeValueAsBytes(data);
 
         List<TestData> deserialized = mapper.readValue(serialized, new TypeReference<List<TestData>>() {
         });
+
         assertEquals(data, deserialized);
     }
 
-    //    @Test
+    @Test
+    public void listTest2() throws IOException {
+        List<ListTestData> data = new ArrayList<>();
+
+        for (int i = 0; i < 2; i++) {
+            data.add(getListData());
+        }
+
+        byte[] serialized = mapper.writeValueAsBytes(data);
+
+        List<ListTestData> deserialized = mapper.readValue(serialized, new TypeReference<List<ListTestData>>() {
+        });
+
+        assertEquals(data, deserialized);
+    }
+
+    @Test
+    public void listTest3() throws IOException {
+        List<List<ByteClass>> data = new ArrayList<>();
+
+        for (int i = 0; i < 2; i++) {
+            data.add(Arrays.asList(new ByteClass((byte) 16)));
+        }
+
+        byte[] serialized = mapper.writeValueAsBytes(data);
+
+        List<List<ByteClass>> deserialized = mapper.readValue(serialized, new TypeReference<List<List<ByteClass>>>() {
+        });
+
+        assertEquals(data, deserialized);
+    }
+
+    @Test
     public void primitiveArrayTest() throws IOException {
         int[] data = new int[100];
 
@@ -90,7 +121,7 @@ public class GeneratorTest {
         assertArrayEquals(data, deserialized);
     }
 
-    //    @Test
+    @Test
     public void primitiveByteArrayTest() throws IOException {
         byte[] data = new byte[100];
 
@@ -105,7 +136,7 @@ public class GeneratorTest {
         assertArrayEquals(data, deserialized);
     }
 
-    //    @Test
+    @Test
     public void valueTest() throws IOException {
         long value = new Random().nextLong();
 
@@ -144,32 +175,140 @@ public class GeneratorTest {
 
     private SimpleData getSimpleData() {
         SimpleData data = new SimpleData(
-                ""
-//                true,
-//                (byte) 17,
-//                (short) 17,
-//                17,
-//                17.5f
+                "test",
+                true,
+                (byte) 17,
+                (short) 17,
+                17,
+                17.5f,
+                Arrays.asList(1, 2, 3, 4, 5),
+                new SubTest(15, true),
+                Arrays.asList(new SubTest(101, false), new SubTest(202, true))
         );
 
         return data;
     }
 
+    private ListTestData getListData() {
+        Map<Integer, Integer> map = new HashMap<>();
+
+        for (int i = 0; i < 6; i++) {
+            map.put(i, i * 2);
+        }
+
+        return new ListTestData(
+                17,
+                Arrays.asList(1, 2, 3, 3, 2, 1),
+                map,
+                Arrays.asList(new SubTest(1, true))
+        );
+    }
+
+    public static class ListTestData {
+        public int intTest;
+        public List<Integer> listTest;
+        public Map<Integer, Integer> mapTest;
+        public List<SubTest> subTests;
+
+        public ListTestData() {
+
+        }
+
+        public ListTestData(int intTest, List<Integer> listTest, Map<Integer, Integer> mapTest, List<SubTest> subTests) {
+            this.intTest = intTest;
+            this.listTest = listTest;
+            this.mapTest = mapTest;
+            this.subTests = subTests;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ListTestData that = (ListTestData) o;
+            return intTest == that.intTest &&
+                    Objects.equals(listTest, that.listTest) &&
+                    Objects.equals(mapTest, that.mapTest) &&
+                    Objects.equals(subTests, that.subTests);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(intTest, listTest, mapTest, subTests);
+        }
+
+        @Override
+        public String toString() {
+            return "ListTestData{" +
+                    "intTest=" + intTest +
+                    ", listTest=" + listTest +
+                    ", mapTest=" + mapTest +
+                    ", subTests=" + subTests +
+                    '}';
+        }
+    }
+
     public static class SimpleData {
         public String string;
-//        public boolean boolTest;
-//        public byte byteTest;
-//        public short shortTest;
-//        public int intTest;
-//        public float floatTest;
+        public boolean boolTest;
+        public byte byteTest;
+        public short shortTest;
+        public int intTest;
+        public float floatTest;
+        public List<Integer> list;
+        public SubTest subTest;
+        public List<SubTest> subTestList;
 
-        public SimpleData(String string/*, boolean boolTest, byte byteTest, short shortTest, int intTest, float floatTest*/) {
+        public SimpleData() {
+
+        }
+
+        public SimpleData(String string, boolean boolTest, byte byteTest, short shortTest, int intTest, float floatTest, List<Integer> list, SubTest subTest, List<SubTest> subTestList) {
             this.string = string;
-//            this.boolTest = boolTest;
-//            this.byteTest = byteTest;
-//            this.shortTest = shortTest;
-//            this.intTest = intTest;
-//            this.floatTest = floatTest;
+            this.boolTest = boolTest;
+            this.byteTest = byteTest;
+            this.shortTest = shortTest;
+            this.intTest = intTest;
+            this.floatTest = floatTest;
+            this.list = list;
+            this.subTest = subTest;
+            this.subTestList = subTestList;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SimpleData that = (SimpleData) o;
+            return boolTest == that.boolTest &&
+                    byteTest == that.byteTest &&
+                    shortTest == that.shortTest &&
+                    intTest == that.intTest &&
+                    Float.compare(that.floatTest, floatTest) == 0 &&
+                    Objects.equals(string, that.string) &&
+                    Objects.equals(list, that.list) &&
+                    Objects.equals(subTest, that.subTest) &&
+                    Objects.equals(subTestList, that.subTestList);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(string, boolTest, byteTest, shortTest, intTest, floatTest, list, subTest, subTestList);
+        }
+
+        @Override
+        public String toString() {
+            return "SimpleData{" +
+                    "string='" + string + '\'' +
+                    ", boolTest=" + boolTest +
+                    ", byteTest=" + byteTest +
+                    ", shortTest=" + shortTest +
+                    ", intTest=" + intTest +
+                    ", floatTest=" + floatTest +
+                    ", list=" + list +
+                    ", subTest=" + subTest +
+                    ", subTestList=" + subTestList +
+                    '}';
         }
     }
 

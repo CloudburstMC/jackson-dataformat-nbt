@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
 import com.nukkitx.jackson.dataformat.nbt.generator.NBTWriteContext;
+import com.nukkitx.jackson.dataformat.nbt.util.DebugDataOutput;
 import com.nukkitx.jackson.dataformat.nbt.util.IOUtils;
 import com.nukkitx.nbt.NbtType;
 
@@ -42,6 +43,8 @@ public class NBTGenerator extends GeneratorBase {
         } else {
             _out = IOUtils.createWriter(out);
         }
+
+        _out = DebugDataOutput.from(_out);
 
         _writeContext = new NBTWriteContext(0, null, _writeContext.getDupDetector(), null, _out);
     }
@@ -88,10 +91,13 @@ public class NBTGenerator extends GeneratorBase {
 
     public void writeStartArray() throws IOException {
         _verifyValueWrite("start an array");
-        if (rootContext == null) { //root tag
-            _out.writeByte(NbtType.LIST.getId());
-            _out.writeUTF("");
-        }
+        System.out.println("write start array: " + getOutputContext().getCurrentName());
+//        getOutputContext().getOutput().writeByte(NbtType.LIST.getId());
+//        if (rootContext == null || _writeContext.inObject()) {
+//            System.out.println("write name: "+getOutputContext().getCurrentName());
+//            getOutputContext().getOutput().writeUTF(rootContext == null ? "" : getOutputContext().getCurrentName());
+//        }
+        getOutputContext().writeValue(NbtType.LIST, null);
         _writeContext = _writeContext.createChildArrayContext();
 
         checkRootContext();
@@ -102,17 +108,19 @@ public class NBTGenerator extends GeneratorBase {
             _reportError("Current context not Array but " + _writeContext.typeDesc());
         }
 
+        System.out.println("write end array");
         getOutputContext().end();
         _writeContext = _writeContext.getParent();
     }
 
     public void writeStartObject() throws IOException {
         _verifyValueWrite("start an object");
-        if (rootContext == null) { //root tag
-            System.out.println("write start object");
-            _out.writeByte(NbtType.COMPOUND.getId());
-            _out.writeUTF("");
-        }
+        System.out.println("write start object");
+        getOutputContext().writeValue(NbtType.COMPOUND, null);
+//        getOutputContext().getOutput().writeByte(NbtType.COMPOUND.getId());
+//        if (rootContext == null || _writeContext.inObject()) { //root tag
+//            getOutputContext().getOutput().writeUTF(rootContext == null ? "" : getOutputContext().getCurrentName());
+//        }
         _writeContext = _writeContext.createChildObjectContext();
 
         checkRootContext();
@@ -125,7 +133,6 @@ public class NBTGenerator extends GeneratorBase {
 
         System.out.println("write end object");
         getOutputContext().end();
-        _out.writeByte(0); // end tag
         _writeContext = _writeContext.getParent();
     }
 
@@ -355,8 +362,8 @@ public class NBTGenerator extends GeneratorBase {
     }
 
     protected void checkRootContext() {
-//        if (rootContext == null) {
-//            rootContext = (NBTWriteContext) _writeContext;
-//        }
+        if (rootContext == null) {
+            rootContext = (NBTWriteContext) _writeContext;
+        }
     }
 }

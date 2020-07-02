@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.nukkitx.jackson.dataformat.nbt.parser.CompoundTagReader;
 import com.nukkitx.jackson.dataformat.nbt.parser.NBTReader;
+import com.nukkitx.jackson.dataformat.nbt.util.DebugDataInput;
 import com.nukkitx.jackson.dataformat.nbt.util.IOUtils;
 
 import java.io.Closeable;
@@ -44,6 +45,8 @@ public class NBTParser extends ParserBase {
         } else {
             _in = IOUtils.createReader(in);
         }
+
+        _in = DebugDataInput.from(_in);
     }
 
     @Override
@@ -64,8 +67,8 @@ public class NBTParser extends ParserBase {
 
         if (reader == null) {
             reader = NBTReader.getRoot(_in);
-            System.out.println("token: " + reader.start());
-            return (_currToken = reader.start());
+            System.out.println("token: " + (_currToken = reader.start()));
+            return _currToken;
         }
 
         JsonToken next = reader.get();

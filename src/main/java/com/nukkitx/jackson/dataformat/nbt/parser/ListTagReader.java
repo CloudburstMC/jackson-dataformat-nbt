@@ -14,11 +14,17 @@ public class ListTagReader extends ArrayReader {
         super(input, parent);
 
         this.type = NbtType.byId(input.readUnsignedByte());
+        this.length = input.readInt();
+        this.token = JsonToken.VALUE_NUMBER_INT; //just a non-null value
+        System.out.println("list type: " + type.getTypeName());
+        System.out.println("list length: " + length);
     }
 
     @Override
     public JsonToken get() throws IOException {
-        super.get();
+        if (super.get() == null) {
+            return null;
+        }
 
         return decodeValue(type);
     }

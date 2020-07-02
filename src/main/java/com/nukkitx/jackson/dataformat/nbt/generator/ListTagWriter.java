@@ -35,7 +35,10 @@ public class ListTagWriter extends NBTWriter {
         super.end();
         origin.writeByte(type.getId());
         origin.writeInt(size);
+        System.out.println("BYTE STREAM SIZE " + byteStream.size());
         origin.write(byteStream.toByteArray());
+        System.out.println("write list type: " + type.getTypeName());
+        System.out.println("write list size: " + size);
         ((Closeable) output).close();
     }
 }

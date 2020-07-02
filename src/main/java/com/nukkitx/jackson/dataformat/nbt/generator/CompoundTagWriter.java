@@ -18,4 +18,10 @@ public class CompoundTagWriter extends NBTWriter {
         output.writeByte(type.getId());
         output.writeUTF(name);
     }
+
+    @Override
+    public void end() throws IOException {
+        super.end();
+        output.writeByte(0); // end tag
+    }
 }
