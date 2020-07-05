@@ -2,15 +2,24 @@ package com.nukkitx.jackson.dataformat.nbt.generator;
 
 import com.fasterxml.jackson.core.json.DupDetector;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
-import com.nukkitx.nbt.tag.Tag;
+import com.nukkitx.jackson.dataformat.nbt.NBTGenerator;
+import com.nukkitx.nbt.NbtType;
+
+import java.io.DataOutput;
+import java.io.IOException;
 
 public class NBTWriteContext extends JsonWriteContext {
 
-    protected String name;
-    public NBTWriter<?> writer;
+    private final NBTGenerator generator;
 
-    public NBTWriteContext(int type, NBTWriteContext parent, DupDetector dups, String name) {
+    protected String name;
+    public NBTWriter writer;
+    private DataOutput output;
+
+    public NBTWriteContext(NBTGenerator generator, int type, NBTWriteContext parent, DupDetector dups, String name, DataOutput output) {
         super(type, parent, dups);
+        this.generator = generator;
+        this.output = output;
         if (name == null) {
             name = "";
         }
@@ -18,16 +27,14 @@ public class NBTWriteContext extends JsonWriteContext {
         this.name = name;
 
         if (inRoot()) {
-            writer = new SingleTagWriter(name);
+            writer = new SingleTagWriter(name, output);
         } else if (!inArray()) {
-            writer = new CompoundTagWriter(name);
+            writer = new CompoundTagWriter(name, output);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void initListType(Tag<?> value) {
-        Class<?> objType = value.getClass();
-        writer = new ListTagWriter(name, objType);
+    private void initListType(NbtType<?> type) throws IOException {
+        writer = new ListTagWriter(name, type, output, generator);
     }
 
     public NBTWriteContext createChildArrayContext() {
@@ -49,12 +56,13 @@ public class NBTWriteContext extends JsonWriteContext {
         throw new UnsupportedOperationException();
     }
 
-    protected NBTWriteContext reset(int type, String name) {
+    protected NBTWriteContext reset(int type, String name, DataOutput output) {
         super.reset(type);
+        this.output = output;
         this.name = name;
 
         if (!inArray()) {
-            writer = new CompoundTagWriter(name);
+            writer = new CompoundTagWriter(name, output);
         } else {
             writer = null;
         }
@@ -67,39 +75,34 @@ public class NBTWriteContext extends JsonWriteContext {
         throw new UnsupportedOperationException();
     }
 
-    public void writeValue(Tag<?> value) {
+    public void writeValue(NbtType<?> type, Object value) throws IOException {
         if (inArray() && _index == 0) {
-            initListType(value);
+            initListType(type);
         }
 
-        writer.write(value);
+        writer.write(type, _currentName, value);
     }
 
-    public void end() {
+    public void end() throws IOException {
+        if (writer == null) {
+            throw new IllegalStateException("Cannot write empty list");
+        }
+
         writer.end();
-
-        if (!inRoot()) {
-            Tag<?> tag = writer.getTag();
-            ((NBTWriteContext) _parent).writeValue(tag);
-        }
-    }
-
-    public Tag<?> getValue() {
-        return writer.getTag();
-    }
-
-    public boolean isEnded() {
-        return writer != null && writer.isEnded();
     }
 
     private NBTWriteContext createOrReset(int type) {
         NBTWriteContext ctxt = (NBTWriteContext) _child;
         if (ctxt == null) {
-            _child = ctxt = new NBTWriteContext(type, this,
-                    (_dups == null) ? null : _dups.child(), _currentName);
+            _child = ctxt = new NBTWriteContext(generator, type, this,
+                    (_dups == null) ? null : _dups.child(), _currentName, writer.output);
             return ctxt;
         }
 
-        return ctxt.reset(type, _currentName);
+        return ctxt.reset(type, _currentName, writer.output);
+    }
+
+    public DataOutput getOutput() {
+        return writer.output;
     }
 }

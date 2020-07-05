@@ -7,10 +7,10 @@ import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.nukkitx.jackson.dataformat.nbt.parser.CompoundTagReader;
 import com.nukkitx.jackson.dataformat.nbt.parser.NBTReader;
-import com.nukkitx.nbt.NbtUtils;
-import com.nukkitx.nbt.stream.NBTInputStream;
-import com.nukkitx.nbt.tag.Tag;
+import com.nukkitx.jackson.dataformat.nbt.util.IOUtils;
 
+import java.io.Closeable;
+import java.io.DataInput;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
@@ -24,38 +24,27 @@ public class NBTParser extends ParserBase {
 
     protected int _formatFeatures;
 
-    protected Tag<?> nbt;
+    protected DataInput _in;
 
     protected NBTReader reader;
 
     protected boolean end = false;
 
-    public NBTParser(IOContext context, BufferRecycler nr, int parserFeatures, int nbtFeatures, ObjectCodec codec, InputStream in) {
+    public NBTParser(IOContext context, BufferRecycler nr, int parserFeatures, int nbtFeatures, ObjectCodec codec, InputStream in) throws IOException {
         super(context, parserFeatures);
         this._objectCodec = codec;
         this._formatFeatures = nbtFeatures;
 
-        NBTInputStream nbtIn;
         if (NBTFactory.Feature.GZIP.enabledIn(nbtFeatures)) {
-            nbtIn = NbtUtils.createReaderLE(in);
-        } else if (NBTFactory.Feature.LITTLE_ENDIAN.enabledIn(nbtFeatures)) {
-            nbtIn = NbtUtils.createReaderLE(in);
-        } else if (NBTFactory.Feature.NETWORK.enabledIn(nbtFeatures)) {
-            nbtIn = NbtUtils.createNetworkReader(in);
-        } else {
-            nbtIn = NbtUtils.createReader(in);
+            in = IOUtils.createGZIPReader(in);
         }
 
-        try {
-            nbt = nbtIn.readTag();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            try {
-                nbtIn.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        if (NBTFactory.Feature.LITTLE_ENDIAN.enabledIn(nbtFeatures)) {
+            _in = IOUtils.createReaderLE(in);
+        } else if (NBTFactory.Feature.NETWORK.enabledIn(nbtFeatures)) {
+            _in = IOUtils.createNetworkReader(in);
+        } else {
+            _in = IOUtils.createReader(in);
         }
     }
 
@@ -64,17 +53,19 @@ public class NBTParser extends ParserBase {
         return super.isExpectedStartObjectToken();
     }
 
-    protected void _closeInput() {
-        //nothing to close?
+    protected void _closeInput() throws IOException {
+        if (_in instanceof Closeable) {
+            ((Closeable) _in).close();
+        }
     }
 
-    public JsonToken nextToken() {
+    public JsonToken nextToken() throws IOException {
         if (end) {
             return null;
         }
 
         if (reader == null) {
-            reader = NBTReader.getByTag(nbt, null);
+            reader = NBTReader.getRoot(_in);
             return (_currToken = reader.start());
         }
 
@@ -92,11 +83,9 @@ public class NBTParser extends ParserBase {
         }
 
         if (next == JsonToken.START_OBJECT) {
-            reader = new CompoundTagReader(reader.getCompoundValue(), reader);
+            reader = new CompoundTagReader(_in, reader);
         } else if (next == JsonToken.START_ARRAY) {
-            Object value = reader.getCurrentValue();
-
-            reader = NBTReader.getByValue(value, reader);
+            reader = NBTReader.getByType(reader.getCurrentType(), reader, _in);
         }
 
         return (_currToken = next);

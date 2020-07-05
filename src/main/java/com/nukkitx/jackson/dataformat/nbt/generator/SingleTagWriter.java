@@ -1,23 +1,19 @@
 package com.nukkitx.jackson.dataformat.nbt.generator;
 
-import com.nukkitx.nbt.tag.Tag;
+import com.nukkitx.nbt.NbtType;
 
-public class SingleTagWriter extends NBTWriter<Tag<?>> {
+import java.io.DataOutput;
+import java.io.IOException;
 
-    protected Tag<?> tag;
+public class SingleTagWriter extends NBTWriter {
 
-    public SingleTagWriter(String name) {
-        super(name);
+    public SingleTagWriter(String name, DataOutput output) {
+        super(name, output);
     }
 
     @Override
-    public void write(Tag<?> tag) {
-        this.tag = tag;
-        end();
-    }
-
-    @Override
-    public Tag<?> getTag() {
-        return tag;
+    public void write(NbtType<?> type, String name, Object value) throws IOException {
+        output.writeByte(type.getId());
+        output.writeUTF("");
     }
 }
