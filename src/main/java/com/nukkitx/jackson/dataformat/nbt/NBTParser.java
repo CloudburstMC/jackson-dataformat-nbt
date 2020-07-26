@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.base.ParserBase;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.BufferRecycler;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.nukkitx.jackson.dataformat.nbt.parser.CompoundTagReader;
 import com.nukkitx.jackson.dataformat.nbt.parser.NBTReader;
 import com.nukkitx.jackson.dataformat.nbt.util.IOUtils;
@@ -59,6 +60,7 @@ public class NBTParser extends ParserBase {
         }
     }
 
+    @Override
     public JsonToken nextToken() throws IOException {
         if (end) {
             return null;
@@ -96,7 +98,12 @@ public class NBTParser extends ParserBase {
         return reader.getCurrentName();
     }
 
+    @Override
     public String getText() {
+        if (getCurrentToken() == JsonToken.FIELD_NAME) { 
+            // fixes an interaction with com.fasterxml.jackson.databind.deser.std.UntypedObjectDeserializer
+            return getCurrentName();
+        }
         return Objects.toString(reader.getCurrentValue());
     }
 
@@ -155,5 +162,15 @@ public class NBTParser extends ParserBase {
     @Override
     public boolean getBooleanValue() {
         return reader.getBooleanValue();
+    }
+
+    // fixes an interaction with com.fasterxml.jackson.databind.deser.std.UntypedObjectDeserializer
+    @Override
+    public Number getNumberValue() throws JsonMappingException {
+        Object v = reader.getCurrentValue();
+        if (v instanceof Number) {
+            return (Number) v;
+        }
+        throw JsonMappingException.from(this, "Expected current value to be a Number");
     }
 }

@@ -97,3 +97,8 @@ $RECYCLE.BIN/
 *.msp
 *.lnk
 .idea
+.vscode
+.devcontainer
+.classpath
+.project
+.settings
